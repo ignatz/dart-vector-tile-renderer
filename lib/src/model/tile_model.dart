@@ -46,36 +46,29 @@ class BoundedPath {
 class TileFeature {
   final TileFeatureType type;
   final Map<String, dynamic> properties;
-  List<TilePoint>? _modelPoints;
-  List<TileLine>? _modelLines;
-  List<TilePolygon>? _modelPolygons;
-  late List<Offset> _points;
-  late List<BoundedPath> _paths;
+
+  // Inputs.
+  final List<TilePoint> _modelPoints;
+  final List<TileLine> _modelLines;
+  final List<TilePolygon> _modelPolygons;
+
+  // Cached values.
+  List<BoundedPath>? _paths;
   BoundedPath? _compoundPath;
 
-  TileFeature(
-      {required this.type,
-      required this.properties,
-      required List<TilePoint>? points,
-      required List<TileLine>? lines,
-      required List<TilePolygon>? polygons})
-      : _modelPoints = points,
-        _modelLines = lines,
-        _modelPolygons = polygons;
+  TileFeature({
+    required this.type,
+    required this.properties,
+    required List<TilePoint>? points,
+    required List<TileLine>? lines,
+    required List<TilePolygon>? polygons,
+  })  : _modelPoints = points ?? const [],
+        _modelLines = lines ?? const [],
+        _modelPolygons = polygons ?? const [];
 
-  List<Offset> get points {
-    if (type != TileFeatureType.point) {
-      throw StateError('Feature does not have points');
-    }
-    final modelPoints = _modelPoints;
-    if (modelPoints != null) {
-      final uiGeometry = UiGeometry();
-      _points = modelPoints
-          .map((e) => uiGeometry.createPoint(e))
-          .toList(growable: false);
-      _modelPoints = null;
-    }
-    return _points;
+  List<TilePoint> get points {
+    assert(type == TileFeatureType.point, 'Feature does not have points');
+    return _modelPoints;
   }
 
   bool get hasPaths =>
@@ -84,46 +77,35 @@ class TileFeature {
   bool get hasPoints => type == TileFeatureType.point;
 
   BoundedPath get compoundPath {
-    var compoundPath = _compoundPath;
-    if (compoundPath == null) {
+    return _compoundPath ??= () {
       final paths = this.paths;
       if (paths.length == 1) {
-        compoundPath = paths.first;
+        return paths.first;
       } else {
         final linesPath = Path();
         for (final line in paths) {
           linesPath.addPath(line.path, Offset.zero);
         }
-        compoundPath = BoundedPath(linesPath);
+        return BoundedPath(linesPath);
       }
-      _compoundPath = compoundPath;
-    }
-    return compoundPath;
+    }();
   }
 
   List<BoundedPath> get paths {
-    if (type == TileFeatureType.point) {
-      throw StateError('Cannot get paths from a point feature');
-    }
-    final modelLines = _modelLines;
-    if (modelLines != null) {
-      assert(type == TileFeatureType.linestring);
-      final uiGeometry = UiGeometry();
-      _paths = modelLines
-          .map((e) => BoundedPath(uiGeometry.createLine(e)))
-          .toList(growable: false);
-      _modelLines = null;
-    }
-    final modelPolygons = _modelPolygons;
-    if (modelPolygons != null) {
-      assert(type == TileFeatureType.polygon);
-      final uiGeometry = UiGeometry();
-      _paths = modelPolygons
-          .map((e) => BoundedPath(uiGeometry.createPolygon(e)))
-          .toList(growable: false);
-      _modelPolygons = null;
-    }
-    return _paths;
+    assert(
+        type != TileFeatureType.point, 'Cannot get paths from a point feature');
+
+    return _paths ??= () {
+      return switch (type) {
+        TileFeatureType.linestring => _modelLines
+            .map((e) => BoundedPath(createLine(e)))
+            .toList(growable: false),
+        TileFeatureType.polygon => _modelPolygons
+            .map((e) => BoundedPath(createPolygon(e)))
+            .toList(growable: false),
+        _ => throw Exception('type mismatch'),
+      };
+    }();
   }
 }
 

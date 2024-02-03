@@ -31,8 +31,9 @@ class FillRenderer extends FeatureRenderer {
         zoom: context.zoom,
         zoomScaleFactor: context.zoomScaleFactor,
         hasImage: context.hasImage);
-    final fillPaint = style.fillPaint?.evaluate(evaluationContext);
-    final outlinePaint = style.outlinePaint?.evaluate(evaluationContext);
+    final fillPaint = style.fillPaint?.evaluate(evaluationContext)?.paint();
+    final outlinePaint =
+        style.outlinePaint?.evaluate(evaluationContext)?.paint();
 
     final polygons = feature.paths;
 
@@ -42,10 +43,10 @@ class FillRenderer extends FeatureRenderer {
         continue;
       }
       if (fillPaint != null) {
-        context.canvas.drawPath(polygon.path, fillPaint.paint());
+        context.canvas.drawPath(polygon.path, fillPaint);
       }
       if (outlinePaint != null) {
-        context.canvas.drawPath(polygon.path, outlinePaint.paint());
+        context.canvas.drawPath(polygon.path, outlinePaint);
       }
     }
   }

@@ -1,9 +1,10 @@
 import 'dart:math';
+import 'dart:ui';
 
 import '../geometry_model.dart';
 import 'polygon_clip.dart';
 
-typedef ClipArea = Rectangle<double>;
+typedef ClipArea = Bounds;
 
 List<TileLine> clipLine(TileLine line, ClipArea clip) {
   final bounds = line.bounds();
@@ -57,7 +58,7 @@ TilePoint? _findSegmentPointInside(ClipArea clip, TilePoint a, TilePoint b,
   if (clip.containsPoint(midpoint)) {
     return midpoint;
   }
-  if (depth > 0 && clip.intersects(Rectangle.fromPoints(a, b))) {
+  if (depth > 0 && clip.intersects(ClipArea.fromPoints(a, b))) {
     return _findSegmentPointInside(clip, a, midpoint, depth: depth - 1) ??
         _findSegmentPointInside(clip, midpoint, b, depth: depth - 1);
   }

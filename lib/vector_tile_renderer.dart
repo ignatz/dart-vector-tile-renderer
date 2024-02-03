@@ -8,6 +8,7 @@ export 'src/logger.dart';
 export 'src/model/tile_data_model.dart';
 export 'src/model/tile_factory.dart';
 export 'src/model/tile_model.dart';
+export 'src/model/transform/geometry_clip.dart' show ClipArea;
 export 'src/model/transform/tile_clip.dart';
 export 'src/model/transform/tile_translate.dart';
 export 'src/renderer.dart';
