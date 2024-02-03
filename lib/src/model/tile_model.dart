@@ -1,4 +1,7 @@
+import 'dart:typed_data';
 import 'dart:ui';
+
+import 'package:dart_earcut/dart_earcut.dart';
 
 import 'geometry_model.dart';
 import 'geometry_model_ui.dart';
@@ -105,6 +108,44 @@ class TileFeature {
             .toList(growable: false),
         _ => throw Exception('type mismatch'),
       };
+    }();
+  }
+
+  List<int> _getTriangles(List<Offset> points) {
+    final ps = List<double>.generate(points.length * 2, (index) {
+      if (index.isEven) {
+        return points[index ~/ 2].dx;
+      }
+      return points[index ~/ 2].dy;
+    });
+
+    return Earcut.triangulateRaw(ps);
+  }
+
+  Vertices? _vertices;
+  Vertices get vertices {
+    return _vertices ??= () {
+      final trianglePoints = <Offset>[];
+
+      for (final polygon in _modelPolygons) {
+        for (final ring in polygon.rings) {
+          final points = ring.points;
+          final triangles = _getTriangles(points);
+
+          final len = triangles.length;
+          for (int i = 0; i < len; ++i) {
+            trianglePoints.add(points[triangles[i]]);
+          }
+        }
+      }
+
+      final points = Float32List(trianglePoints.length * 2);
+      for (int i = 0; i < trianglePoints.length; ++i) {
+        points[i * 2] = trianglePoints[i].dx;
+        points[i * 2 + 1] = trianglePoints[i].dy;
+      }
+
+      return Vertices.raw(VertexMode.triangles, points);
     }();
   }
 }

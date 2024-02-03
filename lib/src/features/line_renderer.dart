@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import '../../vector_tile_renderer.dart';
 import '../context.dart';
 import '../path/path_transform.dart';
@@ -41,31 +43,53 @@ class LineRenderer extends FeatureRenderer {
       return;
     }
 
-    final effectivePaint = context.paintProvider.provide(evaluationContext,
-        paint: linePaintExpression,
-        strokeWidthModifier: (strokeWidth) {
-          if (context.zoomScaleFactor > 1.0) {
-            strokeWidth = strokeWidth / context.zoomScaleFactor;
-          }
-          return strokeWidth;
-        },
-        widthModifier: (strokeWidth) =>
-            context.tileSpaceMapper.widthFromPixelToTile(strokeWidth));
-    if (effectivePaint == null) {
+    final effectivePaintProvider = context.paintProvider.provide(
+      evaluationContext,
+      paint: linePaintExpression,
+      strokeWidthModifier: (strokeWidth) {
+        if (context.zoomScaleFactor > 1.0) {
+          strokeWidth = strokeWidth / context.zoomScaleFactor;
+        }
+        return strokeWidth;
+      },
+      widthModifier: (strokeWidth) =>
+          context.tileSpaceMapper.widthFromPixelToTile(strokeWidth),
+    );
+    if (effectivePaintProvider == null) {
       return;
     }
-    final dashLengths = effectivePaint.strokeDashPattern;
+
+    final effectivePaint = effectivePaintProvider.paint();
+    final dashLengths = effectivePaintProvider.strokeDashPattern;
     final lines = feature.paths;
-    for (var line in lines) {
-      if (!context.optimizations.skipInBoundsChecks &&
-          !context.tileSpaceMapper.isPathWithinTileClip(line)) {
-        continue;
+
+    const batch = true;
+    if (batch) {
+      final batchedPath = ui.Path();
+      for (var line in lines) {
+        if (!context.tileSpaceMapper.isPathWithinTileClip(line)) {
+          continue;
+        }
+
+        var path = line.path;
+        if (dashLengths != null) {
+          path = path.dashPath(RingNumberProvider(dashLengths));
+        }
+
+        batchedPath.addPath(path, const ui.Offset(0, 0));
       }
-      var path = line.path;
-      if (dashLengths != null) {
-        path = path.dashPath(RingNumberProvider(dashLengths));
+      context.canvas.drawPath(batchedPath, effectivePaint);
+    } else {
+      for (var line in lines) {
+        if (!context.tileSpaceMapper.isPathWithinTileClip(line)) {
+          continue;
+        }
+        var path = line.path;
+        if (dashLengths != null) {
+          path = path.dashPath(RingNumberProvider(dashLengths));
+        }
+        context.canvas.drawPath(path, effectivePaint);
       }
-      context.canvas.drawPath(path, effectivePaint.paint());
     }
   }
 }

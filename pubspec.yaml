@@ -13,6 +13,7 @@ dependencies:
   vector_tile: ^2.0.0
   fixnum: ^1.0.0
   collection: ^1.17.2
+  dart_earcut: ^1.1.0
 
 dev_dependencies:
   benchmark_harness: ^2.0.0

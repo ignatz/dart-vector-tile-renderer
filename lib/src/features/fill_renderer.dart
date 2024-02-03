@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import '../../vector_tile_renderer.dart';
 import '../context.dart';
 import '../themes/expression/expression.dart';
@@ -35,18 +37,41 @@ class FillRenderer extends FeatureRenderer {
     final outlinePaint =
         style.outlinePaint?.evaluate(evaluationContext)?.paint();
 
-    final polygons = feature.paths;
+    if (outlinePaint != null) {
+      final polygons = feature.paths;
+      for (final polygon in polygons) {
+        if (!context.optimizations.skipInBoundsChecks &&
+            !context.tileSpaceMapper.isPathWithinTileClip(polygon)) {
+          continue;
+        }
+        if (fillPaint != null) {
+          context.canvas.drawPath(polygon.path, fillPaint);
+        }
 
-    for (final polygon in polygons) {
-      if (!context.optimizations.skipInBoundsChecks &&
-          !context.tileSpaceMapper.isPathWithinTileClip(polygon)) {
-        continue;
-      }
-      if (fillPaint != null) {
-        context.canvas.drawPath(polygon.path, fillPaint);
-      }
-      if (outlinePaint != null) {
         context.canvas.drawPath(polygon.path, outlinePaint);
+      }
+      return;
+    }
+
+    if (fillPaint == null) {
+      return;
+    }
+
+    const drawVertices = true;
+    if (drawVertices) {
+      final vertices = feature.vertices;
+      context.canvas.drawVertices(vertices, ui.BlendMode.src, fillPaint);
+    } else {
+      final batchedPath = ui.Path();
+
+      final polygons = feature.paths;
+      for (final polygon in polygons) {
+        if (!context.tileSpaceMapper.isPathWithinTileClip(polygon)) {
+          continue;
+        }
+        batchedPath.addPath(polygon.path, const ui.Offset(0, 0));
+
+        context.canvas.drawPath(batchedPath, fillPaint);
       }
     }
   }
