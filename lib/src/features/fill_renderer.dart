@@ -7,7 +7,7 @@ import '../themes/style.dart';
 import 'extensions.dart';
 import 'feature_renderer.dart';
 
-final List<ui.Offset> batchedTriangles = [];
+final List<double> batchedTriangles = [];
 ui.Paint? prevPaint;
 int batchSize = 0;
 
@@ -66,8 +66,8 @@ class FillRenderer extends FeatureRenderer {
     if (drawVertices) {
       // Flush previous.
       if (prevPaint != null && prevPaint != fillPaint) {
-        final vertices = toVertices(batchedTriangles!);
-        context.canvas.drawVertices(vertices, ui.BlendMode.src, prevPaint!);
+        context.canvas.drawVertices(
+            toVerticesDouble(batchedTriangles), ui.BlendMode.src, prevPaint!);
 
         //print(batchSize);
         batchSize = 0;
@@ -80,7 +80,7 @@ class FillRenderer extends FeatureRenderer {
       final triangles = batchedTriangles;
 
       final clip = context.tileSpaceMapper.tileClipInTileUnits;
-      feature.pushTrianglePoints(clip, triangles);
+      feature.pushTrianglePointsDouble(clip, triangles);
 
       // final vertices = feature.getVertices(clip);
       // context.canvas.drawVertices(vertices, ui.BlendMode.src, fillPaint);
@@ -99,8 +99,8 @@ class FillRenderer extends FeatureRenderer {
     }
 
     if (forceFlush && prevPaint != null) {
-      final vertices = toVertices(batchedTriangles);
-      context.canvas.drawVertices(vertices, ui.BlendMode.src, prevPaint!);
+      context.canvas.drawVertices(
+          toVerticesDouble(batchedTriangles), ui.BlendMode.src, prevPaint!);
 
       batchedTriangles.clear();
       prevPaint = null;

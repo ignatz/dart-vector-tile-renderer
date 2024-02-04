@@ -77,6 +77,7 @@ class TileLine {
 class TilePolygon {
   final List<TileLine> rings;
   List<Offset>? _trianglePoints;
+  List<double>? _points;
 
   TilePolygon(this.rings);
 
@@ -91,6 +92,28 @@ class TilePolygon {
     });
 
     return Earcut.triangulateRaw(ps);
+  }
+
+  List<double> getEarcutTriangles() {
+    return _points ??= () {
+      final trianglePoints = <double>[];
+      for (final ring in rings) {
+        final points = ring.points;
+        if (points.length < 3) {
+          continue;
+        }
+
+        final triangles = _getTriangles(points);
+
+        final len = triangles.length;
+        for (int i = 0; i < len; ++i) {
+          final p = points[triangles[i]];
+          trianglePoints.add(p.dx);
+          trianglePoints.add(p.dy);
+        }
+      }
+      return trianglePoints;
+    }();
   }
 
   List<Offset> get trianglePoints {

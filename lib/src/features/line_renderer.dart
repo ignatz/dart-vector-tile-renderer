@@ -11,7 +11,7 @@ import 'feature_renderer.dart';
 
 const batch = true;
 
-ui.Path? batchedPath;
+final ui.Path batchedPath = ui.Path();
 ui.Paint? prevPaint;
 int batchSize = 0;
 
@@ -72,19 +72,16 @@ class LineRenderer extends FeatureRenderer {
 
     if (batch) {
       // Flush previous.
-      if (prevPaint != null &&
-          prevPaint != effectivePaint &&
-          batchedPath != null) {
-        context.canvas.drawPath(batchedPath!, prevPaint!);
-        //print(batchSize);
+      if (prevPaint != null && prevPaint != effectivePaint) {
+        context.canvas.drawPath(batchedPath, prevPaint!);
+        //print('batch size; $batchSize');
         batchSize = 0;
         prevPaint = null;
-        batchedPath = null;
+        batchedPath.reset();
       }
 
-      batchSize++;
       prevPaint = effectivePaint;
-      final bpath = batchedPath ??= ui.Path();
+      final bpath = batchedPath;
 
       for (var line in lines) {
         if (!context.tileSpaceMapper.isPathWithinTileClip(line)) {
@@ -96,13 +93,15 @@ class LineRenderer extends FeatureRenderer {
           path = path.dashPath(RingNumberProvider(dashLengths));
         }
 
+        batchSize++;
         bpath.addPath(path, const ui.Offset(0, 0));
       }
 
       if (forceFlush) {
         context.canvas.drawPath(bpath, effectivePaint);
-        batchedPath = null;
+        batchedPath.reset();
         prevPaint = null;
+        //print('batch size; $batchSize');
         batchSize = 0;
       }
     } else {

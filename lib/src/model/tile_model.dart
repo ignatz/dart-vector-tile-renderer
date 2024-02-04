@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -100,9 +99,11 @@ class TileFeature {
     return _paths ??= () {
       return switch (type) {
         TileFeatureType.linestring => _modelLines
+            .where((e) => e.points.length > 1)
             .map((e) => BoundedPath(createLine(e)))
             .toList(growable: false),
         TileFeatureType.polygon => _modelPolygons
+            .where((e) => e.rings.first.points.length >= 3)
             .map((e) => BoundedPath(createPolygon(e)))
             .toList(growable: false),
         _ => throw Exception('type mismatch'),
@@ -118,12 +119,23 @@ class TileFeature {
     }
   }
 
+  void pushTrianglePointsDouble(Bounds clip, List<double> trianglePoints) {
+    for (final polygon in _modelPolygons) {
+      if (clip.overlaps(polygon.bounds())) {
+        trianglePoints.addAll(polygon.getEarcutTriangles());
+      }
+    }
+  }
+
   Vertices getVertices(Rect clip) {
     final trianglePoints = <Offset>[];
     pushTrianglePoints(clip, trianglePoints);
     return toVertices(trianglePoints);
   }
 }
+
+Vertices toVerticesDouble(List<double> trianglePoints) =>
+    Vertices.raw(VertexMode.triangles, Float32List.fromList(trianglePoints));
 
 Vertices toVertices(List<Offset> trianglePoints) {
   final points = Float32List(trianglePoints.length * 2);

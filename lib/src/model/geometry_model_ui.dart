@@ -14,7 +14,13 @@ Path createLine(TileLine line) {
           highQuality: true,
         )
       : line.points;
-  return Path()..addPolygon(points, false);
+  return switch (points.length) {
+    0 || 1 => Path(),
+    2 => Path()
+      ..moveTo(points[0].x, points[0].y)
+      ..lineTo(points[1].x, points[1].y),
+    _ => Path()..addPolygon(points, false),
+  };
 }
 
 Path createPolygon(TilePolygon polygon) {
