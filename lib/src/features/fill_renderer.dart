@@ -59,7 +59,8 @@ class FillRenderer extends FeatureRenderer {
 
     const drawVertices = true;
     if (drawVertices) {
-      final vertices = feature.vertices;
+      final clip = context.tileSpaceMapper.tileClipInTileUnits;
+      final vertices = feature.getVertices(clip);
       context.canvas.drawVertices(vertices, ui.BlendMode.src, fillPaint);
     } else {
       final batchedPath = ui.Path();

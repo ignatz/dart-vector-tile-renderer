@@ -51,6 +51,8 @@ class RectangleDouble {
     return RectangleDouble(left, top, width, height);
   }
 
+  Rect toRect() => Rect.fromLTWH(left, top, width, height);
+
   /// Tests whether `this` entirely contains [another].
   bool containsRectangle(RectangleDouble another) {
     return left <= another.left &&
