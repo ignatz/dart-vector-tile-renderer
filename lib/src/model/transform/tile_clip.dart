@@ -15,7 +15,7 @@ class TileClip {
 
   TileDataLayer _clipLayer(TileDataLayer original) {
     final pixelsPerTileUnit = 1 / original.extent * tileSize;
-    final tileClip = ClipArea(
+    final tileClip = ClipArea.fromLTWH(
         bounds.left / pixelsPerTileUnit,
         bounds.top / pixelsPerTileUnit,
         bounds.width / pixelsPerTileUnit,

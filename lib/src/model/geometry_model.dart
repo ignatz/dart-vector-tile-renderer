@@ -16,68 +16,24 @@ extension Point on TilePoint {
   }
 }
 
-class RectangleDouble {
-  final double left;
-  final double top;
-  final double width;
-  final double height;
+typedef Bounds = Rect;
 
-  /// The x-coordinate of the right edge.
-  double get right => left + width;
-
-  /// The y-coordinate of the bottom edge.
-  double get bottom => top + height;
-
-  const RectangleDouble(this.left, this.top, double width, double height)
-      : width = (width < 0)
-            ? (width == double.negativeInfinity ? 0.0 : (-width * 0)) as dynamic
-            : (width + 0 as dynamic), // Inline _clampToZero<num>.
-        height = (height < 0)
-            ? (height == double.negativeInfinity ? 0.0 : (-height * 0))
-                as dynamic
-            : (height + 0 as dynamic);
-
-  RectangleDouble.fromRectangle(Rectangle<double> r)
-      : left = r.left,
-        top = r.top,
-        width = r.width,
-        height = r.height;
-
-  factory RectangleDouble.fromPoints(TilePoint a, TilePoint b) {
-    double left = min(a.x, b.x);
-    double width = (max(a.x, b.x) - left);
-    double top = min(a.y, b.y);
-    double height = (max(a.y, b.y) - top);
-    return RectangleDouble(left, top, width, height);
-  }
-
-  Rect toRect() => Rect.fromLTWH(left, top, width, height);
-
-  /// Tests whether `this` entirely contains [another].
-  bool containsRectangle(RectangleDouble another) {
-    return left <= another.left &&
-        left + width >= another.left + another.width &&
-        top <= another.top &&
-        top + height >= another.top + another.height;
-  }
-
+extension BoundsExtension on Bounds {
   /// Tests whether [another] is inside or along the edges of `this`.
   bool containsPoint(TilePoint another) {
     return another.x >= left &&
-        another.x <= left + width &&
+        another.x <= right &&
         another.y >= top &&
-        another.y <= top + height;
+        another.y <= bottom;
   }
 
-  bool intersects(RectangleDouble other) {
-    return (left <= other.left + other.width &&
-        other.left <= left + width &&
-        top <= other.top + other.height &&
-        other.top <= top + height);
+  bool intersects(Bounds other) {
+    return (left <= other.right &&
+        other.left <= right &&
+        top <= other.bottom &&
+        other.top <= bottom);
   }
 }
-
-typedef Bounds = RectangleDouble;
 
 class TileLine {
   final List<TilePoint> points;
