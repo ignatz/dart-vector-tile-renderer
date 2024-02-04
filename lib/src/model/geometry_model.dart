@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:dart_earcut/dart_earcut.dart';
+import 'geometry_model_ui.dart';
+import 'simplify.dart';
 
 typedef TilePoint = Offset;
 
@@ -95,7 +97,15 @@ class TilePolygon {
     return _trianglePoints ??= () {
       final trianglePoints = <Offset>[];
       for (final ring in rings) {
-        final points = ring.points;
+        final points = simplifyPoints(
+          points: ring.points,
+          tolerance: tolerance,
+          highQuality: true,
+        );
+        if (points.length < 3) {
+          continue;
+        }
+
         final triangles = _getTriangles(points);
 
         final len = triangles.length;
