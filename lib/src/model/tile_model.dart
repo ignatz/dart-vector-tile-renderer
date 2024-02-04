@@ -110,17 +110,19 @@ class TileFeature {
     }();
   }
 
-  List<Offset> getTrianglePoints(Bounds clip) {
-    final trianglePoints = <Offset>[];
+  void pushTrianglePoints(Bounds clip, List<Offset> trianglePoints) {
     for (final polygon in _modelPolygons) {
       if (clip.overlaps(polygon.bounds())) {
         trianglePoints.addAll(polygon.trianglePoints);
       }
     }
-    return trianglePoints;
   }
 
-  Vertices getVertices(Rect clip) => toVertices(getTrianglePoints(clip));
+  Vertices getVertices(Rect clip) {
+    final trianglePoints = <Offset>[];
+    pushTrianglePoints(clip, trianglePoints);
+    return toVertices(trianglePoints);
+  }
 }
 
 Vertices toVertices(List<Offset> trianglePoints) {

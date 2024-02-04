@@ -118,10 +118,10 @@ class _TileState extends State<Tile> {
       final clipOffsetX = widget.options.clipOffsetX;
       final clipOffsetY = widget.options.clipOffsetY;
       final clip = TileClip(
-          bounds: Rectangle(clipOffsetX, clipOffsetY, clipSize, clipSize));
+          bounds: Rect.fromLTWH(clipOffsetX, clipOffsetY, clipSize, clipSize));
       tileData = clip.clip(tileData);
       if (clipOffsetX > 0 || clipOffsetY > 0) {
-        tileData = TileTranslate(Point(-clipOffsetX, -clipOffsetY))
+        tileData = TileTranslate(Offset(-clipOffsetX, -clipOffsetY))
             .translate(tileData);
       }
     }

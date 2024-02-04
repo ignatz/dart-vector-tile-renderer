@@ -80,7 +80,7 @@ class FillRenderer extends FeatureRenderer {
       final triangles = batchedTriangles;
 
       final clip = context.tileSpaceMapper.tileClipInTileUnits;
-      triangles.addAll(feature.getTrianglePoints(clip));
+      feature.pushTrianglePoints(clip, triangles);
 
       // final vertices = feature.getVertices(clip);
       // context.canvas.drawVertices(vertices, ui.BlendMode.src, fillPaint);

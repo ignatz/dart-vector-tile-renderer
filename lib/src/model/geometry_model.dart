@@ -97,11 +97,13 @@ class TilePolygon {
     return _trianglePoints ??= () {
       final trianglePoints = <Offset>[];
       for (final ring in rings) {
-        final points = simplifyPoints(
-          points: ring.points,
-          tolerance: tolerance,
-          highQuality: true,
-        );
+        final points = simplify
+            ? simplifyPoints(
+                points: ring.points,
+                tolerance: tolerance,
+                highQuality: true,
+              )
+            : ring.points;
         if (points.length < 3) {
           continue;
         }

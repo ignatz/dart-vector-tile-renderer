@@ -33,11 +33,14 @@ class Renderer {
   /// [tile] the tile to render
   /// [clip] the optional clip to constrain tile rendering, used to limit drawing
   ///        so that a portion of a tile can be rendered to a canvas
-  void render(Canvas canvas, TileSource tile,
-      {Rect? clip,
-      required double zoomScaleFactor,
-      required double zoom,
-      required double rotation}) {
+  void render(
+    Canvas canvas,
+    TileSource tile, {
+    Rect? clip,
+    required double zoomScaleFactor,
+    required double zoom,
+    required double rotation,
+  }) {
     profileSync('Render', () {
       final tileSpace =
           Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
@@ -59,7 +62,13 @@ class Renderer {
           tileClip: tileClip,
           optimizations: optimizations,
           textPainterProvider: painterProvider);
-      final effectiveTheme = theme.atZoom(zoom);
+
+      // NOTE: This is an optimization: Render fewer larger tiles per screen.
+      final reducedZoomLevel = zoom - 0;
+      if (reducedZoomLevel != zoom) {
+        print('rendering at reduced zoom level: ${zoom - reducedZoomLevel}');
+      }
+      final effectiveTheme = theme.atZoom(reducedZoomLevel);
       for (final themeLayer in effectiveTheme.layers) {
         logger.log(() => 'rendering theme layer ${themeLayer.id}');
         themeLayer.render(context);

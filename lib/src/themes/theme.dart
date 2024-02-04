@@ -7,6 +7,7 @@ class Theme {
   /// the version of the theme
   final String version;
   final List<ThemeLayer> layers;
+
   Theme({required this.id, required this.version, required this.layers});
 
   /// Provides a copy of this theme that only has layers that match
@@ -39,6 +40,11 @@ class Theme {
   /// Provides the sources of all layers of this theme.
   Set<String> get tileSources =>
       layers.map((e) => e.tileSource).whereType<String>().toSet();
+
+  @override
+  String toString() {
+    return 'Theme($id, $version, $layers)';
+  }
 }
 
 /// The type of theme layer
