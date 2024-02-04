@@ -24,6 +24,7 @@ class SymbolLineRenderer extends FeatureRenderer {
     Style style,
     TileLayer layer,
     TileFeature feature,
+    bool forceFlush,
   ) {
     final symbolLayout = style.symbolLayout;
     if (symbolLayout == null) {

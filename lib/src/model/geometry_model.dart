@@ -2,12 +2,13 @@ import 'dart:ui';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:dart_earcut/dart_earcut.dart';
 
 typedef TilePoint = Offset;
 
 extension Point on TilePoint {
-  double get x => this.dx;
-  double get y => this.dy;
+  double get x => dx;
+  double get y => dy;
 
   double distanceSq(TilePoint rhs) {
     final double dx = this.dx - rhs.dx;
@@ -73,10 +74,38 @@ class TileLine {
 
 class TilePolygon {
   final List<TileLine> rings;
+  List<Offset>? _trianglePoints;
 
   TilePolygon(this.rings);
 
   Bounds bounds() => rings.first.bounds();
+
+  List<int> _getTriangles(List<Offset> points) {
+    final ps = List<double>.generate(points.length * 2, (index) {
+      if (index.isEven) {
+        return points[index ~/ 2].dx;
+      }
+      return points[index ~/ 2].dy;
+    });
+
+    return Earcut.triangulateRaw(ps);
+  }
+
+  List<Offset> get trianglePoints {
+    return _trianglePoints ??= () {
+      final trianglePoints = <Offset>[];
+      for (final ring in rings) {
+        final points = ring.points;
+        final triangles = _getTriangles(points);
+
+        final len = triangles.length;
+        for (int i = 0; i < len; ++i) {
+          trianglePoints.add(points[triangles[i]]);
+        }
+      }
+      return trianglePoints;
+    }();
+  }
 
   @override
   bool operator ==(Object other) =>

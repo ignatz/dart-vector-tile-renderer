@@ -7,6 +7,10 @@ import '../themes/style.dart';
 import 'extensions.dart';
 import 'feature_renderer.dart';
 
+final List<ui.Offset> batchedTriangles = [];
+ui.Paint? prevPaint;
+int batchSize = 0;
+
 class FillRenderer extends FeatureRenderer {
   final Logger logger;
   FillRenderer(this.logger);
@@ -18,6 +22,7 @@ class FillRenderer extends FeatureRenderer {
     Style style,
     TileLayer layer,
     TileFeature feature,
+    bool forceFlush,
   ) {
     if (!feature.hasPaths) {
       return;
@@ -59,9 +64,26 @@ class FillRenderer extends FeatureRenderer {
 
     const drawVertices = true;
     if (drawVertices) {
+      // Flush previous.
+      if (prevPaint != null && prevPaint != fillPaint) {
+        final vertices = toVertices(batchedTriangles!);
+        context.canvas.drawVertices(vertices, ui.BlendMode.src, prevPaint!);
+
+        //print(batchSize);
+        batchSize = 0;
+        batchedTriangles.clear();
+        prevPaint = null;
+      }
+
+      batchSize++;
+      prevPaint = fillPaint;
+      final triangles = batchedTriangles;
+
       final clip = context.tileSpaceMapper.tileClipInTileUnits;
-      final vertices = feature.getVertices(clip);
-      context.canvas.drawVertices(vertices, ui.BlendMode.src, fillPaint);
+      triangles.addAll(feature.getTrianglePoints(clip));
+
+      // final vertices = feature.getVertices(clip);
+      // context.canvas.drawVertices(vertices, ui.BlendMode.src, fillPaint);
     } else {
       final batchedPath = ui.Path();
 
@@ -74,6 +96,15 @@ class FillRenderer extends FeatureRenderer {
 
         context.canvas.drawPath(batchedPath, fillPaint);
       }
+    }
+
+    if (forceFlush && prevPaint != null) {
+      final vertices = toVertices(batchedTriangles);
+      context.canvas.drawVertices(vertices, ui.BlendMode.src, prevPaint!);
+
+      batchedTriangles.clear();
+      prevPaint = null;
+      batchSize = 0;
     }
   }
 }

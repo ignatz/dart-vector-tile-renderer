@@ -9,6 +9,12 @@ import '../themes/style.dart';
 import 'extensions.dart';
 import 'feature_renderer.dart';
 
+const batch = true;
+
+ui.Path? batchedPath;
+ui.Paint? prevPaint;
+int batchSize = 0;
+
 class LineRenderer extends FeatureRenderer {
   final Logger logger;
 
@@ -21,6 +27,7 @@ class LineRenderer extends FeatureRenderer {
     Style style,
     TileLayer layer,
     TileFeature feature,
+    bool forceFlush,
   ) {
     if (!feature.hasPaths) {
       return;
@@ -63,9 +70,22 @@ class LineRenderer extends FeatureRenderer {
     final dashLengths = effectivePaintProvider.strokeDashPattern;
     final lines = feature.paths;
 
-    const batch = true;
     if (batch) {
-      final batchedPath = ui.Path();
+      // Flush previous.
+      if (prevPaint != null &&
+          prevPaint != effectivePaint &&
+          batchedPath != null) {
+        context.canvas.drawPath(batchedPath!, prevPaint!);
+        //print(batchSize);
+        batchSize = 0;
+        prevPaint = null;
+        batchedPath = null;
+      }
+
+      batchSize++;
+      prevPaint = effectivePaint;
+      final bpath = batchedPath ??= ui.Path();
+
       for (var line in lines) {
         if (!context.tileSpaceMapper.isPathWithinTileClip(line)) {
           continue;
@@ -76,9 +96,15 @@ class LineRenderer extends FeatureRenderer {
           path = path.dashPath(RingNumberProvider(dashLengths));
         }
 
-        batchedPath.addPath(path, const ui.Offset(0, 0));
+        bpath.addPath(path, const ui.Offset(0, 0));
       }
-      context.canvas.drawPath(batchedPath, effectivePaint);
+
+      if (forceFlush) {
+        context.canvas.drawPath(bpath, effectivePaint);
+        batchedPath = null;
+        prevPaint = null;
+        batchSize = 0;
+      }
     } else {
       for (var line in lines) {
         if (!context.tileSpaceMapper.isPathWithinTileClip(line)) {

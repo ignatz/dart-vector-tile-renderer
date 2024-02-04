@@ -2,8 +2,6 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:dart_earcut/dart_earcut.dart';
-
 import 'geometry_model.dart';
 import 'geometry_model_ui.dart';
 
@@ -112,45 +110,26 @@ class TileFeature {
     }();
   }
 
-  List<int> _getTriangles(List<Offset> points) {
-    final ps = List<double>.generate(points.length * 2, (index) {
-      if (index.isEven) {
-        return points[index ~/ 2].dx;
-      }
-      return points[index ~/ 2].dy;
-    });
-
-    return Earcut.triangulateRaw(ps);
-  }
-
-  Vertices getVertices(Rect clip) {
+  List<Offset> getTrianglePoints(Bounds clip) {
     final trianglePoints = <Offset>[];
-
     for (final polygon in _modelPolygons) {
-      final bounds = polygon.bounds().toRect();
-      if (!clip.overlaps(bounds)) {
-        continue;
-      }
-
-      for (final ring in polygon.rings) {
-        final points = ring.points;
-        final triangles = _getTriangles(points);
-
-        final len = triangles.length;
-        for (int i = 0; i < len; ++i) {
-          trianglePoints.add(points[triangles[i]]);
-        }
+      if (clip.overlaps(polygon.bounds())) {
+        trianglePoints.addAll(polygon.trianglePoints);
       }
     }
-
-    final points = Float32List(trianglePoints.length * 2);
-    for (int i = 0; i < trianglePoints.length; ++i) {
-      points[i * 2] = trianglePoints[i].dx;
-      points[i * 2 + 1] = trianglePoints[i].dy;
-    }
-
-    return Vertices.raw(VertexMode.triangles, points);
+    return trianglePoints;
   }
+
+  Vertices getVertices(Rect clip) => toVertices(getTrianglePoints(clip));
+}
+
+Vertices toVertices(List<Offset> trianglePoints) {
+  final points = Float32List(trianglePoints.length * 2);
+  for (int i = 0; i < trianglePoints.length; ++i) {
+    points[i * 2] = trianglePoints[i].dx;
+    points[i * 2 + 1] = trianglePoints[i].dy;
+  }
+  return Vertices.raw(VertexMode.triangles, points);
 }
 
 enum TileFeatureType { point, linestring, polygon, background, none }

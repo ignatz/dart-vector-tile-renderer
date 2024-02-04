@@ -14,23 +14,27 @@ class DefaultLayer extends ThemeLayer {
   final TileLayerSelector selector;
   final Style style;
 
-  DefaultLayer(super.id, super.type,
-      {required this.selector,
-      required this.style,
-      required super.minzoom,
-      required super.maxzoom,
-      required super.metadata});
+  DefaultLayer(
+    super.id,
+    super.type, {
+    required this.selector,
+    required this.style,
+    required super.minzoom,
+    required super.maxzoom,
+    required super.metadata,
+  });
 
   @override
   void render(Context context) {
     final layers =
-        selector.select(context.tileSource.tileset, context.zoom.truncate());
+        selector.select(context.tileSource.tileset, context.zoom.floor());
     if (layers.isEmpty) {
       return;
     }
 
     final features = context.tileSource.tileset.resolver
-        .resolveFeatures(selector, context.zoom.truncate());
+        .resolveFeatures(selector, context.zoom.truncate())
+        .toList(growable: false);
 
     if (features.isEmpty) {
       return;
@@ -45,13 +49,35 @@ class DefaultLayer extends ThemeLayer {
       );
 
       context.tileSpaceMapper.drawInTileSpace(() {
-        for (final feature in features) {
-          context.featureRenderer.render(
+        for (int i = 0; i < features.length; ++i) {
+          final layerFeature = features[i];
+          final nextLayerFeature =
+              i + 1 < features.length ? features[i + 1] : null;
+
+          final renderer = context.featureRenderer.getFeatureRenderer(
+            type,
+            layerFeature.feature,
+          );
+
+          if (renderer == null) {
+            context.logger.warn(() =>
+                'layer type $type feature ${layerFeature.feature.type} is not implemented');
+            continue;
+          }
+
+          // Trigger a force flush for renderers with crappy cross-feature
+          // batching implementations when we know the next feature will be
+          // of a different type.
+          final bool forceFlush = nextLayerFeature == null ||
+              nextLayerFeature.feature.type != layerFeature.feature.type;
+
+          renderer.render(
             context,
             type,
             style,
-            feature.layer,
-            feature.feature,
+            layerFeature.layer,
+            layerFeature.feature,
+            forceFlush,
           );
         }
       });

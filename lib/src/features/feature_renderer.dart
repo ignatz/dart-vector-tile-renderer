@@ -15,10 +15,11 @@ abstract class FeatureRenderer {
     Style style,
     TileLayer layer,
     TileFeature feature,
+    bool forceFlush,
   );
 }
 
-class FeatureDispatcher extends FeatureRenderer {
+class FeatureDispatcher {
   final Logger logger;
 
   final FillRenderer fillRenderer;
@@ -34,31 +35,19 @@ class FeatureDispatcher extends FeatureRenderer {
         symbolPointRenderer = SymbolPointRenderer(logger),
         symbolLineRenderer = SymbolLineRenderer(logger);
 
-  @override
-  void render(
-    Context context,
+  FeatureRenderer? getFeatureRenderer(
     ThemeLayerType layerType,
-    Style style,
-    TileLayer layer,
     TileFeature feature,
-  ) {
-    final FeatureRenderer? delegate = switch (layerType) {
-      ThemeLayerType.fill => fillRenderer,
-      ThemeLayerType.fillExtrusion => fillExtrusionRenderer,
-      ThemeLayerType.line => lineRenderer,
-      ThemeLayerType.symbol => switch (feature.type) {
-          TileFeatureType.point => symbolPointRenderer,
-          TileFeatureType.linestring => symbolLineRenderer,
-          _ => null,
-        },
-      _ => null,
-    };
-
-    if (delegate == null) {
-      logger.warn(() =>
-          'layer type $layerType feature ${feature.type} is not implemented');
-    } else {
-      delegate.render(context, layerType, style, layer, feature);
-    }
-  }
+  ) =>
+      switch (layerType) {
+        ThemeLayerType.fill => fillRenderer,
+        ThemeLayerType.fillExtrusion => fillExtrusionRenderer,
+        ThemeLayerType.line => lineRenderer,
+        ThemeLayerType.symbol => switch (feature.type) {
+            TileFeatureType.point => symbolPointRenderer,
+            TileFeatureType.linestring => symbolLineRenderer,
+            _ => null,
+          },
+        _ => null,
+      };
 }

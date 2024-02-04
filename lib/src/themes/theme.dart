@@ -27,8 +27,14 @@ class Theme {
             .toList(growable: false));
   }
 
-  bool _matchesZoom(double zoom, ThemeLayer layer) =>
-      (zoom >= (layer.minzoom ?? -1)) && (zoom <= (layer.maxzoom ?? 100));
+  bool _matchesZoom(double zoom, ThemeLayer layer) {
+    final keep =
+        (zoom >= (layer.minzoom ?? -1)) && (zoom < (layer.maxzoom ?? 100));
+    // if (!keep) {
+    //     print('discard ${layer.id} ${layer.type}');
+    // }
+    return keep;
+  }
 
   /// Provides the sources of all layers of this theme.
   Set<String> get tileSources =>
