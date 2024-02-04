@@ -20,12 +20,19 @@ abstract class FeatureRenderer {
 
 class FeatureDispatcher extends FeatureRenderer {
   final Logger logger;
-  final Map<ThemeLayerType, FeatureRenderer> typeToRenderer;
-  final Map<TileFeatureType, FeatureRenderer> symbolTypeToRenderer;
+
+  final FillRenderer fillRenderer;
+  final FillRenderer fillExtrusionRenderer;
+  final LineRenderer lineRenderer;
+  final SymbolPointRenderer symbolPointRenderer;
+  final SymbolLineRenderer symbolLineRenderer;
 
   FeatureDispatcher(this.logger)
-      : typeToRenderer = createDispatchMapping(logger),
-        symbolTypeToRenderer = createSymbolDispatchMapping(logger);
+      : fillRenderer = FillRenderer(logger),
+        fillExtrusionRenderer = FillRenderer(logger),
+        lineRenderer = LineRenderer(logger),
+        symbolPointRenderer = SymbolPointRenderer(logger),
+        symbolLineRenderer = SymbolLineRenderer(logger);
 
   @override
   void render(
@@ -35,12 +42,17 @@ class FeatureDispatcher extends FeatureRenderer {
     TileLayer layer,
     TileFeature feature,
   ) {
-    FeatureRenderer? delegate;
-    if (layerType == ThemeLayerType.symbol) {
-      delegate = symbolTypeToRenderer[feature.type];
-    } else {
-      delegate = typeToRenderer[layerType];
-    }
+    final FeatureRenderer? delegate = switch (layerType) {
+      ThemeLayerType.fill => fillRenderer,
+      ThemeLayerType.fillExtrusion => fillExtrusionRenderer,
+      ThemeLayerType.line => lineRenderer,
+      ThemeLayerType.symbol => switch (feature.type) {
+          TileFeatureType.point => symbolPointRenderer,
+          TileFeatureType.linestring => symbolLineRenderer,
+          _ => null,
+        },
+      _ => null,
+    };
 
     if (delegate == null) {
       logger.warn(() =>
@@ -48,22 +60,5 @@ class FeatureDispatcher extends FeatureRenderer {
     } else {
       delegate.render(context, layerType, style, layer, feature);
     }
-  }
-
-  static Map<ThemeLayerType, FeatureRenderer> createDispatchMapping(
-      Logger logger) {
-    return {
-      ThemeLayerType.fill: FillRenderer(logger),
-      ThemeLayerType.fillExtrusion: FillRenderer(logger),
-      ThemeLayerType.line: LineRenderer(logger),
-    };
-  }
-
-  static Map<TileFeatureType, FeatureRenderer> createSymbolDispatchMapping(
-      Logger logger) {
-    return {
-      TileFeatureType.point: SymbolPointRenderer(logger),
-      TileFeatureType.linestring: SymbolLineRenderer(logger),
-    };
   }
 }
