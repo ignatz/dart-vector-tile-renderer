@@ -16,11 +16,13 @@ class TextHaloExpression extends Expression<List<Shadow>> {
   final Expression<double>? haloWidth;
 
   TextHaloExpression(this.colorExpression, this.haloWidth)
-      : super('textHalo(${colorExpression.cacheKey},${haloWidth?.cacheKey})', {
-          ...colorExpression.properties(),
-          ...(haloWidth?.properties() ?? {}),
-          'zoom'
-        });
+      : super(
+            'textHalo(${colorExpression.cacheKey},${haloWidth?.cacheKey})',
+            <String>{
+              ...colorExpression.properties(),
+              ...(haloWidth?.properties() ?? const []),
+              'zoom'
+            }.toList(growable: false));
 
   @override
   List<Shadow>? evaluate(EvaluationContext context) {

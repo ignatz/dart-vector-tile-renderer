@@ -43,7 +43,7 @@ class StepExpression extends Expression {
   bool get isConstant => false;
 }
 
-Set<String> _createProperties(Expression input, final Expression defaultOutput,
+List<String> _createProperties(Expression input, final Expression defaultOutput,
     final List<StepStop> stops) {
   final accumulator = {...input.properties()};
   accumulator.addAll(defaultOutput.properties());
@@ -51,5 +51,5 @@ Set<String> _createProperties(Expression input, final Expression defaultOutput,
     accumulator.addAll(stop.value.properties());
     accumulator.addAll(stop.output.properties());
   }
-  return accumulator;
+  return accumulator.toList(growable: false);
 }

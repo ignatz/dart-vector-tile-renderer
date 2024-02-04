@@ -8,6 +8,7 @@ import 'expression/expression.dart';
 class TileLayerSelector {
   final TileSelector tileSelector;
   final LayerSelector layerSelector;
+
   late final String cacheKey;
 
   TileLayerSelector(this.tileSelector, this.layerSelector) {
@@ -49,7 +50,7 @@ abstract class LayerSelector {
 
   Iterable<TileFeature> features(Iterable<TileFeature> features, int zoom);
 
-  Set<String> propertyNames();
+  List<String> propertyNames();
   Set<String> layerNames();
 
   int? minZoom() => null;
@@ -68,10 +69,10 @@ class _ZoomConstraintLayerSelector extends LayerSelector {
       features;
 
   @override
-  Set<String> layerNames() => {};
+  Set<String> layerNames() => const {};
 
   @override
-  Set<String> propertyNames() => {};
+  List<String> propertyNames() => const [];
 
   @override
   Iterable<TileLayer> select(Iterable<TileLayer> tileLayers, int zoom) {
@@ -114,12 +115,12 @@ class _CompositeSelector extends LayerSelector {
   }
 
   @override
-  Set<String> propertyNames() {
+  List<String> propertyNames() {
     final names = <String>{};
     for (final delegate in delegates) {
       names.addAll(delegate.propertyNames());
     }
-    return names;
+    return names.toList(growable: false);
   }
 
   @override
@@ -163,7 +164,7 @@ class _NamedLayerSelector extends LayerSelector {
       features;
 
   @override
-  Set<String> propertyNames() => {};
+  List<String> propertyNames() => const [];
 
   @override
   Set<String> layerNames() => {name};
@@ -191,7 +192,7 @@ class _ExpressionLayerSelector extends LayerSelector {
       tileLayers;
 
   @override
-  Set<String> propertyNames() => _expression.properties();
+  List<String> propertyNames() => _expression.properties();
 
   @override
   Set<String> layerNames() => {};
@@ -205,13 +206,14 @@ class _NoneLayerSelector extends LayerSelector {
       [];
 
   @override
-  Iterable<TileLayer> select(Iterable<TileLayer> tileLayers, int zoom) => [];
+  Iterable<TileLayer> select(Iterable<TileLayer> tileLayers, int zoom) =>
+      const [];
 
   @override
-  Set<String> propertyNames() => {};
+  List<String> propertyNames() => const [];
 
   @override
-  Set<String> layerNames() => {};
+  Set<String> layerNames() => const {};
 }
 
 class _NoneTileSelector extends TileSelector {

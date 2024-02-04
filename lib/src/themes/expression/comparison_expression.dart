@@ -7,8 +7,10 @@ class ComparisonExpression extends Expression {
 
   ComparisonExpression(
       this._comparison, String comparisonKey, this._first, this._second)
-      : super('(${_first.cacheKey} $comparisonKey ${_second.cacheKey})',
-            {..._first.properties(), ..._second.properties()});
+      : super(
+            '(${_first.cacheKey} $comparisonKey ${_second.cacheKey})',
+            <String>{..._first.properties(), ..._second.properties()}
+                .toList(growable: false));
 
   @override
   evaluate(EvaluationContext context) {
@@ -56,9 +58,9 @@ class MatchExpression extends Expression {
 }
 
 @override
-Set<String> _createProperties(Expression input,
+List<String> _createProperties(Expression input,
     final List<List<Expression>> values, final List<Expression> outputs) {
-  final accumulator = {...input.properties()};
+  final accumulator = <String>{...input.properties()};
   for (final value in values) {
     for (final delegate in value) {
       accumulator.addAll(delegate.properties());
@@ -67,5 +69,5 @@ Set<String> _createProperties(Expression input,
   for (final output in outputs) {
     accumulator.addAll(output.properties());
   }
-  return accumulator;
+  return accumulator.toList(growable: false);
 }

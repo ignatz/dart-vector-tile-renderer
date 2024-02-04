@@ -68,13 +68,14 @@ abstract class InterpolateExpression extends Expression {
 }
 
 @override
-Set<String> _createProperties(Expression input, List<InterpolationStop> stops) {
+List<String> _createProperties(
+    Expression input, List<InterpolationStop> stops) {
   final accumulator = {...input.properties()};
   for (final stop in stops) {
     accumulator.addAll(stop.value.properties());
     accumulator.addAll(stop.output.properties());
   }
-  return accumulator;
+  return accumulator.toList(growable: false);
 }
 
 class InterpolateLinearExpression extends InterpolateExpression {

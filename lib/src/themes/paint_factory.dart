@@ -30,13 +30,16 @@ class PaintExpression extends Expression<PaintModel> {
   static String _cacheKey(PaintStyle delegate) =>
       "paint(${delegate.id},${delegate.paintingStyle},opacity(${delegate.opacity.cacheKey}),strokeWidth(${delegate.strokeWidth.cacheKey}),color(${delegate.color.cacheKey}),lineCap(${delegate.lineCap?.cacheKey ?? ''}),lineJoin(${delegate.lineJoin?.cacheKey ?? ''}))";
 
-  static Set<String> _properties(PaintStyle delegate) => {
-        ...delegate.color.properties(),
-        ...delegate.strokeWidth.properties(),
-        ...delegate.opacity.properties(),
-        ...delegate.lineCap?.properties() ?? {},
-        ...delegate.lineJoin?.properties() ?? {},
-      };
+  static List<String> _properties(PaintStyle delegate) {
+    final set = <String>{
+      ...delegate.color.properties(),
+      ...delegate.strokeWidth.properties(),
+      ...delegate.opacity.properties(),
+      ...delegate.lineCap?.properties() ?? const [],
+      ...delegate.lineJoin?.properties() ?? const [],
+    };
+    return set.toList(growable: false);
+  }
 }
 
 class PaintStyle {

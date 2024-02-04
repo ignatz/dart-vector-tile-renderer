@@ -1,3 +1,4 @@
+import 'dart:collection';
 import '../../logger.dart';
 import '../../model/tile_model.dart';
 import 'property_accumulator.dart';
@@ -27,7 +28,7 @@ class EvaluationContext {
     return properties[name];
   }
 
-  _typeName() {
+  String _typeName() {
     switch (_featureType) {
       case TileFeatureType.point:
         return 'Point';
@@ -45,11 +46,10 @@ class EvaluationContext {
 
 abstract class Expression<T> {
   final String cacheKey;
-  late final Set<String> _properties;
+  final List<String> _properties;
 
-  Expression(this.cacheKey, Set<String> properties) {
-    _properties = Set.unmodifiable(properties);
-  }
+  Expression(this.cacheKey, List<String> properties)
+      : _properties = List.unmodifiable(properties);
 
   T? evaluate(EvaluationContext context);
 
@@ -57,7 +57,7 @@ abstract class Expression<T> {
   String toString() => cacheKey;
 
   /// the names of properties accessed by this expression
-  Set<String> properties() => _properties;
+  List<String> properties() => _properties;
 
   bool get isConstant;
 }
@@ -65,7 +65,7 @@ abstract class Expression<T> {
 class UnsupportedExpression extends Expression {
   final dynamic _json;
 
-  UnsupportedExpression(this._json) : super('unsupported', <String>{});
+  UnsupportedExpression(this._json) : super('unsupported', const []);
 
   get json => _json;
 
@@ -115,7 +115,7 @@ class EqualsExpression extends Expression {
 
   EqualsExpression(this._first, this._second)
       : super('equals(${_first.cacheKey},${_second.cacheKey})',
-            {..._first.properties(), ..._second.properties()});
+            [..._first.properties(), ..._second.properties()]);
 
   @override
   evaluate(EvaluationContext context) {

@@ -1,11 +1,13 @@
+import 'dart:collection';
+
 import 'expression.dart';
 
 extension ExpressionList on List<Expression> {
-  Set<String> joinProperties() {
-    final accumulator = <String>{};
+  List<String> joinProperties() {
+    final accumulator = HashSet<String>();
     for (final expression in this) {
       accumulator.addAll(expression.properties());
     }
-    return accumulator;
+    return accumulator.toList();
   }
 }

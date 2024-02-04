@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'expression.dart';
 
 class ConditionOutputPair {
@@ -30,11 +31,11 @@ class CaseExpression extends Expression {
   bool get isConstant => false;
 }
 
-Set<String> _createProperties(List<ConditionOutputPair> cases) {
-  final accumulator = <String>{};
+List<String> _createProperties(List<ConditionOutputPair> cases) {
+  final accumulator = HashSet<String>();
   for (final aCase in cases) {
     accumulator.addAll(aCase.condition.properties());
     accumulator.addAll(aCase.output.properties());
   }
-  return accumulator;
+  return accumulator.toList(growable: false);
 }
