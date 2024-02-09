@@ -111,23 +111,23 @@ class TileFeature {
     }();
   }
 
-  void pushTrianglePoints(Bounds clip, List<Offset> trianglePoints) {
+  void pushTrianglePoints(Bounds? clip, List<Offset> trianglePoints) {
     for (final polygon in _modelPolygons) {
-      if (clip.overlaps(polygon.bounds())) {
+      if (clip?.overlaps(polygon.bounds()) ?? true) {
         trianglePoints.addAll(polygon.trianglePoints);
       }
     }
   }
 
-  void pushTrianglePointsDouble(Bounds clip, List<double> trianglePoints) {
+  void pushTrianglePointsDouble(Bounds? clip, List<double> trianglePoints) {
     for (final polygon in _modelPolygons) {
-      if (clip.overlaps(polygon.bounds())) {
+      if (clip?.overlaps(polygon.bounds()) ?? true) {
         trianglePoints.addAll(polygon.getEarcutTriangles());
       }
     }
   }
 
-  Vertices getVertices(Rect clip) {
+  Vertices getVertices(Bounds clip) {
     final trianglePoints = <Offset>[];
     pushTrianglePoints(clip, trianglePoints);
     return toVertices(trianglePoints);
