@@ -7,40 +7,42 @@ export 'expression_parser.dart';
 
 class EvaluationContext {
   final Map<String, dynamic> Function() _properties;
+
   final TileFeatureType _featureType;
   final double zoom;
   final double zoomScaleFactor;
   final bool Function(String) hasImage;
   final Logger logger;
 
-  EvaluationContext(this._properties, this._featureType, this.logger,
-      {required this.zoom,
-      required this.zoomScaleFactor,
-      required this.hasImage});
+  EvaluationContext(
+    this._properties,
+    this._featureType,
+    this.logger, {
+    required this.zoom,
+    required this.zoomScaleFactor,
+    required this.hasImage,
+  });
 
   getProperty(String name) {
-    if (name == '\$type') {
-      return _typeName();
-    } else if (name == 'zoom') {
-      return zoom;
+    switch (name) {
+      case '\$type':
+        return _typeName();
+      case 'zoom':
+        return zoom;
+      default:
+        final properties = _properties();
+        return properties[name];
     }
-    final properties = _properties();
-    return properties[name];
   }
 
   String _typeName() {
-    switch (_featureType) {
-      case TileFeatureType.point:
-        return 'Point';
-      case TileFeatureType.linestring:
-        return 'LineString';
-      case TileFeatureType.polygon:
-        return 'Polygon';
-      case TileFeatureType.background:
-        return 'Background';
-      case TileFeatureType.none:
-        return 'None';
-    }
+    return switch (_featureType) {
+      TileFeatureType.point => 'Point',
+      TileFeatureType.linestring => 'LineString',
+      TileFeatureType.polygon => 'Polygon',
+      TileFeatureType.background => 'Background',
+      TileFeatureType.none => 'None',
+    };
   }
 }
 

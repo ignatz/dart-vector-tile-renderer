@@ -34,10 +34,13 @@ class SymbolPointRenderer extends FeatureRenderer {
     }
 
     final evaluationContext = EvaluationContext(
-        () => feature.properties, feature.type, logger,
-        zoom: context.zoom,
-        zoomScaleFactor: context.zoomScaleFactor,
-        hasImage: context.hasImage);
+      () => feature.properties,
+      feature.type,
+      logger,
+      zoom: context.zoom,
+      zoomScaleFactor: context.zoomScaleFactor,
+      hasImage: context.hasImage,
+    );
 
     final text = symbolLayout.text?.text.evaluate(evaluationContext);
     final icon = symbolLayout.getIcon(context, evaluationContext,
@@ -46,19 +49,27 @@ class SymbolPointRenderer extends FeatureRenderer {
       logger.warn(() => 'point with no text or icon');
       return;
     }
+
     final textAbbreviation =
         text == null ? null : TextAbbreviator().abbreviate(text);
     if (textAbbreviation != null &&
         !context.labelSpace.canAccept(textAbbreviation)) {
       return;
     }
+
     final lines = text == null
         ? null
         : TextWrapper(symbolLayout.text!).wrap(evaluationContext, text);
 
     final textApproximation = lines == null
         ? null
-        : TextApproximation(context, evaluationContext, style, lines);
+        : TextApproximation(
+            context,
+            evaluationContext,
+            style,
+            lines,
+          ); // Expensive
+
     final textAnchor = symbolLayout.text?.anchor.evaluate(evaluationContext) ??
         LayoutAnchor.center;
     final rotationAlignment = symbolLayout.textRotationAlignment(
@@ -89,26 +100,34 @@ class SymbolPointRenderer extends FeatureRenderer {
           context.canvas.rotate(-rotation);
           context.canvas.translate(-offset.dx, -offset.dy);
         }
+
+        // Render icon.
         if (icon != null) {
-          final occupied = icon.render(offset,
-              contentSize: textApproximation?.renderer.size ?? Size.zero,
-              withRotation: false);
+          final occupied = icon.render(
+            offset,
+            contentSize: textApproximation?.renderer.size ?? Size.zero,
+            withRotation: false,
+          );
+
           if (occupied != null) {
-            if (!occupied.overlapsText && textAnchor == LayoutAnchor.top) {
+            final overlaps = occupied.overlapsText;
+            if (!overlaps && textAnchor == LayoutAnchor.top) {
               textOffset = textOffset.translate(0, occupied.area.height / 2.0);
-            } else if (occupied.overlapsText &&
-                textAnchor == LayoutAnchor.center) {
+            } else if (overlaps && textAnchor == LayoutAnchor.center) {
               textOffset = textOffset.translate(
-                  0,
-                  (occupied.contentArea.top - occupied.area.top).abs() -
-                      (occupied.contentArea.bottom - occupied.area.bottom)
-                          .abs());
+                0,
+                (occupied.contentArea.top - occupied.area.top).abs() -
+                    (occupied.contentArea.bottom - occupied.area.bottom).abs(),
+              );
             }
           }
         }
+
+        // Render text.
         if (textApproximation != null) {
           textApproximation.renderer.render(textOffset);
         }
+
         if (rotation != 0.0) {
           context.canvas.restore();
         }

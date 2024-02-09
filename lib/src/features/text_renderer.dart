@@ -12,21 +12,35 @@ class TextApproximation {
   final Context context;
   final EvaluationContext evaluationContext;
   final Style style;
+
   final List<String> textLines;
-  late final String text;
+  final String text;
   Offset? _translation;
   Size? _size;
   TextRenderer? _renderer;
 
   StyledSymbol? _symbol;
-  bool _symbolCreated = false;
+  //bool _symbolCreated = false;
 
   TextApproximation(
-      this.context, this.evaluationContext, this.style, this.textLines) {
-    text = textLines.join('\n');
-    double? textSize =
-        style.symbolLayout!.text!.textSize.evaluate(evaluationContext);
-    if (textSize != null) {
+    this.context,
+    this.evaluationContext,
+    this.style,
+    this.textLines,
+  ) : text = textLines.join('\n');
+
+  Size? get size {
+    return _size ??= () {
+      final text = style.symbolLayout?.text;
+      if (text == null) {
+        return null;
+      }
+
+      var textSize = text.textSize.evaluate(evaluationContext);
+      if (textSize == null) {
+        return null;
+      }
+
       if (context.zoomScaleFactor > 1.0) {
         textSize = textSize / context.zoomScaleFactor;
       }
@@ -37,35 +51,36 @@ class TextApproximation {
       final approximateHeight = (textLines.length > 1)
           ? (approximateLineHeight * (textSize / 2))
           : approximateLineHeight;
-      final size = Size(approximateWidth, approximateHeight);
-      _size = size;
-      final anchor =
-          style.symbolLayout!.text!.anchor.evaluate(evaluationContext) ??
-              LayoutAnchor.DEFAULT;
-      _translation = anchor.offset(size);
-    }
+      return Size(approximateWidth, approximateHeight);
+    }();
   }
 
-  Size? get size => _size;
-  Offset? get translation => _translation;
+  Offset? get translation {
+    final size = this.size;
+    if (size == null) {
+      return null;
+    }
+
+    return _translation ??= () {
+      final text = style.symbolLayout?.text;
+      final anchor =
+          text?.anchor.evaluate(evaluationContext) ?? LayoutAnchor.DEFAULT;
+      return anchor.offset(size);
+    }();
+  }
 
   bool get hasRenderer => _renderer != null;
 
   StyledSymbol? get styledSymbol {
-    if (!_symbolCreated) {
-      _symbol = _createStyledSymbol(context, evaluationContext, style, text);
-      _symbolCreated = true;
-    }
-    return _symbol;
+    return _symbol ??= () {
+      return _createStyledSymbol(context, evaluationContext, style, text);
+    }();
   }
 
   TextRenderer get renderer {
-    var result = _renderer;
-    if (result == null) {
-      result = TextRenderer(context, evaluationContext, style, styledSymbol!);
-      _renderer = result;
-    }
-    return result;
+    return _renderer ??= () {
+      return TextRenderer(context, evaluationContext, style, styledSymbol!);
+    }();
   }
 
   Rect? labelBox(Offset offset, {required bool translated}) {
@@ -120,8 +135,12 @@ class TextRenderer {
   late final TextPainter? _painter;
   late final Offset? _translation;
 
-  TextRenderer(this.context, EvaluationContext evaluationContext, this.style,
-      this.symbol) {
+  TextRenderer(
+    this.context,
+    EvaluationContext evaluationContext,
+    this.style,
+    this.symbol,
+  ) {
     _painter = context.textPainterProvider.provide(symbol);
     _translation = _layout(evaluationContext);
   }
@@ -149,7 +168,9 @@ class TextRenderer {
       context.canvas.save();
       context.canvas.translate(_translation!.dx, _translation!.dy);
     }
+
     painter.paint(context.canvas, offset);
+
     if (_translation != null) {
       context.canvas.restore();
     }
@@ -177,16 +198,10 @@ Rect? _labelBox(Offset offset, Offset? translation, double width, double height,
 }
 
 extension _LayoutJustifyExtension on LayoutJustify {
-  TextAlign toTextAlign() {
-    if (this == LayoutJustify.center) {
-      return TextAlign.center;
-    }
-    if (this == LayoutJustify.left) {
-      return TextAlign.left;
-    }
-    if (this == LayoutJustify.right) {
-      return TextAlign.left;
-    }
-    return TextAlign.center;
-  }
+  TextAlign toTextAlign() => switch (this) {
+        LayoutJustify.center => TextAlign.center,
+        LayoutJustify.left => TextAlign.left,
+        LayoutJustify.right => TextAlign.left,
+        _ => TextAlign.center,
+      };
 }

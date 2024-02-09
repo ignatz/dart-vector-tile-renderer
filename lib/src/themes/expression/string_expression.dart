@@ -36,11 +36,7 @@ class _OptionalStringExpression extends Expression<String?> {
 
   @override
   String? evaluate(EvaluationContext context) {
-    final v = delegate.evaluate(context);
-    if (v != null) {
-      return v.toString();
-    }
-    return null;
+    return delegate.evaluate(context)?.toString();
   }
 
   @override

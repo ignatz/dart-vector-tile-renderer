@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../context.dart';
 
 class Theme {
@@ -8,7 +10,11 @@ class Theme {
   final String version;
   final List<ThemeLayer> layers;
 
-  Theme({required this.id, required this.version, required this.layers});
+  const Theme({
+    required this.id,
+    required this.version,
+    required this.layers,
+  });
 
   /// Provides a copy of this theme that only has layers that match
   /// the given [zoom].
@@ -39,11 +45,11 @@ class Theme {
 
   /// Provides the sources of all layers of this theme.
   Set<String> get tileSources =>
-      layers.map((e) => e.tileSource).whereType<String>().toSet();
+      layers.map((e) => e.tileSource).whereNotNull().toSet();
 
   @override
   String toString() {
-    return 'Theme($id, $version, $layers)';
+    return 'Theme($id, ${layers.join('\n\t')})';
   }
 }
 
@@ -66,10 +72,21 @@ abstract class ThemeLayer {
   final double? minzoom;
   final double? maxzoom;
   final Map<String, dynamic> metadata;
-  ThemeLayer(this.id, this.type,
-      {required this.minzoom, required this.maxzoom, required this.metadata});
+
+  const ThemeLayer(
+    this.id,
+    this.type, {
+    required this.minzoom,
+    required this.maxzoom,
+    required this.metadata,
+  });
 
   String? get tileSource;
 
   void render(Context context);
+
+  @override
+  String toString() {
+    return 'ThemeLayer($id, $type, $metadata)';
+  }
 }
