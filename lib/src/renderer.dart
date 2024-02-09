@@ -15,11 +15,12 @@ class Renderer {
   final Logger logger;
   final FeatureDispatcher featureRenderer;
   final TextPainterProvider painterProvider;
-  Renderer(
-      {required this.theme,
-      this.painterProvider = const DefaultTextPainterProvider(),
-      Logger? logger})
-      : logger = logger ?? const Logger.noop(),
+
+  Renderer({
+    required this.theme,
+    this.painterProvider = const DefaultTextPainterProvider(),
+    Logger? logger,
+  })  : logger = logger ?? const Logger.noop(),
         featureRenderer = FeatureDispatcher(logger ?? const Logger.noop());
 
   /// renders the given tile to the canvas
@@ -42,14 +43,19 @@ class Renderer {
     required double rotation,
   }) {
     profileSync('Render', () {
-      final tileSpace =
-          Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
-      canvas.save();
-      canvas.clipRect(tileSpace);
+      // NOTE: Remove the clip to avoid labels to be clipped when rotating the map.
+      if (clip != null) {
+        canvas.save();
+        canvas.clipRect(clip);
+      }
+
       final tileClip = clip ?? tileSpace;
       final optimizations = Optimizations(
-          skipInBoundsChecks: clip == null ||
-              (tileClip.width - tileSpace.width).abs() < (tileSpace.width / 2));
+        skipInBoundsChecks: false,
+        // skipInBoundsChecks: clip == null ||
+        //     (tileClip.width - tileSpace.width).abs() < (tileSpace.width / 2),
+      );
+
       final context = Context(
           logger: logger,
           canvas: canvas,
@@ -68,12 +74,16 @@ class Renderer {
       if (reducedZoomLevel != zoom) {
         print('rendering at reduced zoom level: ${zoom - reducedZoomLevel}');
       }
+
       final effectiveTheme = theme.atZoom(reducedZoomLevel);
       for (final themeLayer in effectiveTheme.layers) {
         logger.log(() => 'rendering theme layer ${themeLayer.id}');
         themeLayer.render(context);
       }
-      canvas.restore();
+
+      if (clip != null) {
+        canvas.restore();
+      }
     });
   }
 }
