@@ -1,5 +1,7 @@
 import 'dart:ui' as ui;
 
+import 'package:logging/logging.dart' as log;
+
 import '../../vector_tile_renderer.dart';
 import '../context.dart';
 import '../themes/expression/expression.dart';
@@ -55,7 +57,7 @@ class FillRenderer extends FeatureRenderer {
         }
         context.canvas.drawPath(path, outlinePaint);
       } else {
-        print('WARN expensive outline paint');
+        _logger.finer('Expensive outline paint');
         for (final polygon in feature.paths) {
           if (!context.tileSpaceMapper.isPathWithinTileClip(polygon)) {
             continue;
@@ -173,3 +175,5 @@ class FillRenderer extends FeatureRenderer {
     }
   }
 }
+
+final _logger = log.Logger('fill');
